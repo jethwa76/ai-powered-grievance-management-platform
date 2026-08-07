@@ -1,0 +1,32 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+  backend:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      - mongo
+      - ai-service
+    ports:
+      - "4000:4000"
+  ai-service:
+    build: ./ai-service
+    environment:
+      AI_MODEL_NAME: ${AI_MODEL_NAME:-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
+      AI_LOW_CONFIDENCE_THRESHOLD: ${AI_LOW_CONFIDENCE_THRESHOLD:-0.62}
+      AI_ENABLE_TRANSFORMER: ${AI_ENABLE_TRANSFORMER:-true}
+    ports:
+      - "8000:8000"
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+volumes:
+  mongo_data:

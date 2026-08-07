@@ -1,0 +1,13 @@
+{
+  "departments": [
+    {"code":"public-works","name":"Public Works","categories":["Roads & Footpaths","Street Lighting","Drainage & Flooding"]},
+    {"code":"water","name":"Water Supply","categories":["Water Leakage","Water Quality","New Connection"]},
+    {"code":"sanitation","name":"Sanitation & Waste","categories":["Garbage Collection","Illegal Dumping","Public Toilets"]},
+    {"code":"electricity","name":"Electricity","categories":["Power Outage","Unsafe Wiring","Metering"]},
+    {"code":"transport","name":"Transport","categories":["Public Transit","Traffic Signals","Parking"]},
+    {"code":"health","name":"Public Health","categories":["Clinics & Hospitals","Mosquito Control","Food Safety"]},
+    {"code":"other","name":"General Administration","categories":["Other"]}
+  ],
+  "statuses": ["submitted","under_review","assigned","in_progress","awaiting_citizen","resolved","closed","reopened"],
+  "priorities": ["low","medium","high","critical"]
+}

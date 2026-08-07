@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { complaintSchema } from '../src/validators/schemas.js';
+describe('complaint validation', () => { it('rejects a short description', () => { expect(() => complaintSchema.parse({title:'Road issue',description:'short',location:{address:'Civic road'}})).toThrow(); }); it('accepts a valid complaint', () => { expect(complaintSchema.parse({title:'Open drain near school',description:'The uncovered drain has been dangerous for residents for several days.',location:{address:'12 Civic Road'},urgency:'high'}).title).toBe('Open drain near school'); }); });

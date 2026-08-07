@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import { User } from '../models/User.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../middleware/error.js';
+const router = Router();
+router.use(authenticate);
+router.get('/me', (req, res) => res.json({ success: true, data: { user: req.user } }));
+router.patch('/me', asyncHandler(async (req, res) => { const allowed = ['name','phone','preferredLanguage']; const update = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key))); if (req.body.password) update.passwordHash = await bcrypt.hash(req.body.password, 12); const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select('-passwordHash -refreshTokens'); res.json({ success: true, data: { user } }); }));
+router.get('/', requireRoles('super_admin'), asyncHandler(async (req, res) => { const users = await User.find().select('-passwordHash -refreshTokens').populate('department','name'); res.json({ success: true, data: { users } }); }));
+router.patch('/:id/role', requireRoles('super_admin'), asyncHandler(async (req, res) => { if (!['citizen','department_officer','department_admin','super_admin','ai_review_officer'].includes(req.body.role)) throw new AppError('Invalid role', 400, 'VALIDATION_ERROR'); const user = await User.findByIdAndUpdate(req.params.id, { role: req.body.role, department: req.body.department }, { new: true }).select('-passwordHash -refreshTokens'); res.json({ success: true, data: { user } }); }));
+export default router;

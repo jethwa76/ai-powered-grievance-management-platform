@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { ReviewQueue } from '../models/ReviewQueue.js';
+import { Complaint } from '../models/Complaint.js';
+import { AiPrediction } from '../models/AiPrediction.js';
+import { Timeline } from '../models/Timeline.js';
+import { Department } from '../models/Department.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../middleware/error.js';
+const router = Router(); router.use(authenticate, requireRoles('ai_review_officer','super_admin'));
+router.get('/', asyncHandler(async (_req,res) => { const items = await ReviewQueue.find({status:'pending'}).sort({createdAt:1}).populate({path:'complaint',populate:[{path:'department',select:'name code'},{path:'citizen',select:'name'}]}); res.json({success:true,data:{items}}); }));
+router.post('/:id/decision', asyncHandler(async (req,res) => { const { departmentCode, category, priority, decision, reason } = req.body; if (!['approve','override'].includes(decision)) throw new AppError('Invalid review decision',400,'VALIDATION_ERROR'); const item = await ReviewQueue.findById(req.params.id).populate('complaint'); if (!item) throw new AppError('Review item not found',404,'NOT_FOUND'); const complaint = item.complaint; const department = await Department.findOne({code: departmentCode}); if (decision === 'override' && !department) throw new AppError('Department code is invalid',400,'VALIDATION_ERROR'); if (department) complaint.department = department._id; if (category) complaint.category = category; if (priority) complaint.priority = priority; complaint.aiReviewRequired = false; complaint.status = 'assigned'; await complaint.save(); item.status = decision === 'override' ? 'overridden' : 'approved'; item.reviewer = req.user._id; item.decision = { departmentCode, category, priority, decision, reason }; item.decidedAt = new Date(); await item.save(); await AiPrediction.findOneAndUpdate({complaint:complaint._id}, {reviewRequired:false}); await Timeline.create({complaint:complaint._id,actor:req.user._id,event:'ai_review_completed',status:'assigned',comment:reason,metadata:item.decision}); req.app.get('io')?.to(`complaint:${complaint._id}`).emit('complaint:reviewed',{complaintId:complaint._id,status:'assigned'}); res.json({success:true,data:{item,complaint}}); }));
+export default router;
