@@ -23,9 +23,16 @@ export async function createComplaint(input, citizen, io) {
 }
 
 export async function canAccessComplaint(complaint, user) {
+  if (!complaint || !user) return false;
   if (['super_admin','ai_review_officer'].includes(user.role)) return true;
-  if (user.role === 'citizen') return complaint.citizen._id?.equals(user._id) || complaint.citizen.equals(user._id);
-  return user.department && complaint.department?._id?.equals(user.department) || user.department?.equals(complaint.department);
+  if (user.role === 'citizen') {
+    const citId = user._id?.toString();
+    const compCitId = complaint.citizen?._id?.toString() || complaint.citizen?.toString();
+    return Boolean(citId && compCitId && citId === compCitId);
+  }
+  const deptId = user.department?._id?.toString() || user.department?.toString();
+  const compDeptId = complaint.department?._id?.toString() || complaint.department?.toString();
+  return Boolean(deptId && compDeptId && deptId === compDeptId);
 }
 
 export async function updateStatus(complaint, input, actor, io) {
