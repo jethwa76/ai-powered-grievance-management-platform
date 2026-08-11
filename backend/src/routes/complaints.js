@@ -23,4 +23,39 @@ router.patch('/:id/status', requireRoles('department_officer','department_admin'
 router.patch('/:id/assign', requireRoles('department_admin','super_admin'), asyncHandler(async (req, res) => { const complaint = await Complaint.findById(req.params.id); const officer = await User.findOne({ _id: req.body.officerId, role: { $in: ['department_officer','department_admin'] }, department: req.user.role === 'super_admin' ? req.body.departmentId || complaint?.department : req.user.department }); if (!complaint || !officer) throw new AppError('Complaint or officer not found', 404, 'NOT_FOUND'); complaint.assignedTo = officer._id; complaint.status = 'assigned'; await complaint.save(); await Timeline.create({ complaint: complaint._id, actor: req.user._id, event: 'assigned', status: 'assigned', metadata: { officerId: officer._id } }); req.app.get('io')?.to(`complaint:${complaint._id}`).emit('complaint:assignment', { complaintId: complaint._id, officer: { id: officer._id, name: officer.name } }); res.json({ success: true, data: { complaint } }); }));
 router.post('/:id/feedback', asyncHandler(async (req, res) => { const input = feedbackSchema.parse(req.body); const complaint = await Complaint.findById(req.params.id); if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND'); const updated = await addFeedback(complaint, input, req.user); res.json({ success: true, data: { complaint: updated } }); }));
 router.post('/:id/notes', requireRoles('department_officer','department_admin','super_admin'), asyncHandler(async (req,res) => { const complaint = await Complaint.findById(req.params.id); if (!complaint || !(await canAccessComplaint(complaint, req.user))) throw new AppError('Complaint not found',404,'NOT_FOUND'); const comment = String(req.body.comment || '').trim(); if (!comment || comment.length > 2000) throw new AppError('A note between 1 and 2000 characters is required',400,'VALIDATION_ERROR'); await Timeline.create({ complaint: complaint._id, actor: req.user._id, event: 'internal_note', status: complaint.status, comment, metadata: { internal: true } }); res.status(201).json({ success:true, data:{ message:'Note added' } }); }));
+router.put('/:id', asyncHandler(async (req, res) => {
+  const input = updateComplaintSchema.parse(req.body);
+  const complaint = await Complaint.findById(req.params.id);
+  if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND');
+  const isOwner = complaint.citizen?.toString() === req.user._id?.toString();
+  const isAdmin = ['super_admin', 'department_admin'].includes(req.user.role);
+  if (!isOwner && !isAdmin) throw new AppError('Forbidden', 403, 'FORBIDDEN');
+  if (isOwner && !isAdmin && !['submitted', 'under_review'].includes(complaint.status)) {
+    throw new AppError('Complaint cannot be edited once in progress', 400, 'INVALID_STATE');
+  }
+  if (input.title) complaint.title = input.title;
+  if (input.description) complaint.description = input.description;
+  if (input.category) complaint.category = input.category;
+  if (input.urgency || input.priority) complaint.priority = input.urgency || input.priority;
+  if (input.location) {
+    complaint.location = { ...complaint.location, ...input.location };
+  }
+  await complaint.save();
+  await Timeline.create({ complaint: complaint._id, actor: req.user._id, event: 'complaint_updated', status: complaint.status, comment: 'Complaint details updated.' });
+  const updated = await Complaint.findById(complaint._id).populate('department', 'name code').populate('citizen', 'name email').populate('assignedTo', 'name');
+  res.json({ success: true, data: { complaint: updated } });
+}));
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const complaint = await Complaint.findById(req.params.id);
+  if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND');
+  const isOwner = complaint.citizen?.toString() === req.user._id?.toString();
+  const isAdmin = ['super_admin', 'department_admin'].includes(req.user.role);
+  if (!isOwner && !isAdmin) throw new AppError('Forbidden', 403, 'FORBIDDEN');
+  if (isOwner && !isAdmin && !['submitted', 'under_review'].includes(complaint.status)) {
+    throw new AppError('Complaint cannot be deleted once in progress', 400, 'INVALID_STATE');
+  }
+  await Complaint.findByIdAndDelete(req.params.id);
+  await Timeline.deleteMany({ complaint: req.params.id });
+  res.json({ success: true, data: { message: 'Complaint deleted successfully' } });
+}));
 export default router;
