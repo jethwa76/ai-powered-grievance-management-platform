@@ -1,1 +1,18 @@
-import { Link } from 'react-router-dom'; export default function NotFound(){return <div className="not-found"><div className="brand"><span className="brand-mark">✦</span><span>Civic<span>Flow</span></span></div><div className="not-found-number">404</div><h1>This page took a wrong turn.</h1><p>Let’s get you back to a place where progress is visible.</p><Link to="/" className="button primary">Back to home</Link></div>}
+import { Link } from 'react-router-dom';
+import { useT } from '../context/LanguageContext';
+
+export default function NotFound() {
+  const t = useT();
+  return (
+    <div className="not-found">
+      <div className="brand">
+        <span className="brand-mark">✦</span>
+        <span>Civic<span>Flow</span></span>
+      </div>
+      <div className="not-found-number">404</div>
+      <h1>{t('nf_h1')}</h1>
+      <p>{t('nf_p')}</p>
+      <Link to="/" className="button primary">{t('nav_back_home')}</Link>
+    </div>
+  );
+}

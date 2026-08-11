@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Clock3, FileText, Plus, Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useT } from '../context/LanguageContext';
 import api from '../lib/api';
 import { formatDate } from '../lib/format';
 import { Badge, Card, EmptyState, Loading, PageTitle, StatCard } from '../components/Ui';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const t = useT();
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-complaints-dashboard'],
@@ -25,32 +27,32 @@ export default function Dashboard() {
   return (
     <>
       <PageTitle 
-        eyebrow="CITIZEN OVERVIEW" 
-        title={`Good morning, ${user?.name?.split(' ')[0] || 'there'}.`} 
-        description="Here's the latest summary of your submitted civic grievances." 
+        eyebrow={t('dash_eyebrow')} 
+        title={`${t('dash_greeting')}, ${user?.name?.split(' ')[0] || 'there'}.`} 
+        description={t('dash_subtitle')} 
         action={
           <Link to="/user/complaints/new" className="button primary">
-            <Plus size={17} /> Lodge complaint
+            <Plus size={17} /> {t('dash_lodge_btn')}
           </Link>
         }
       />
 
       <div className="stat-grid">
-        <StatCard label="Total Complaints" value={total} change="All submitted tickets" icon={FileText} accent="teal" />
-        <StatCard label="Pending Review" value={pending} change="Under initial evaluation" icon={AlertCircle} accent="amber" />
-        <StatCard label="Active / In Progress" value={active} change="Assigned to department" icon={Clock3} accent="coral" />
-        <StatCard label="Resolved Cases" value={resolved} change="Action completed" icon={CheckCircle2} accent="mint" />
+        <StatCard label={t('dash_stat_total')} value={total} change={t('dash_stat_total_sub')} icon={FileText} accent="teal" />
+        <StatCard label={t('dash_stat_pending')} value={pending} change={t('dash_stat_pending_sub')} icon={AlertCircle} accent="amber" />
+        <StatCard label={t('dash_stat_active')} value={active} change={t('dash_stat_active_sub')} icon={Clock3} accent="coral" />
+        <StatCard label={t('dash_stat_resolved')} value={resolved} change={t('dash_stat_resolved_sub')} icon={CheckCircle2} accent="mint" />
       </div>
 
       <div className="dashboard-grid" style={{ marginTop: '24px' }}>
         <Card className="recent-card">
           <div className="card-header">
             <div>
-              <h3>Your recent complaints</h3>
-              <p>Track the progress of your issues.</p>
+              <h3>{t('dash_recent_title')}</h3>
+              <p>{t('dash_recent_sub')}</p>
             </div>
             <Link to="/user/complaints" className="text-link">
-              View all <ArrowUpRight size={15} />
+              {t('dash_view_all')} <ArrowUpRight size={15} />
             </Link>
           </div>
 
@@ -61,7 +63,7 @@ export default function Dashboard() {
                   <div className="complaint-symbol">{item.title?.[0]}</div>
                   <div className="complaint-main">
                     <strong>{item.title}</strong>
-                    <span>{item.ticketId} · {item.department?.name || 'Routing in progress'}</span>
+                    <span>{item.ticketId} · {item.department?.name || t('dash_routing')}</span>
                   </div>
                   <div className="complaint-meta">
                     <Badge>{item.status}</Badge>
@@ -71,7 +73,7 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No complaints yet" description="Your first step toward a better neighbourhood starts here." />
+            <EmptyState title={t('dash_empty_title')} description={t('dash_empty_sub')} />
           )}
         </Card>
 
@@ -81,14 +83,14 @@ export default function Dashboard() {
               <Sparkles size={17} />
             </div>
             <div>
-              <strong>Smart Routing &amp; Duplicate Detection</strong>
-              <p>Every submitted complaint is analyzed with AI to ensure fast routing and avoid duplicates.</p>
+              <strong>{t('dash_ai_title')}</strong>
+              <p>{t('dash_ai_body')}</p>
             </div>
           </div>
           <div className="side-tip">
-            <span>TIP OF THE DAY</span>
-            <p>Adding a precise address or landmark helps field officers act up to 30% faster.</p>
-            <Link to="/user/complaints/new">Lodge a detailed complaint <ArrowUpRight size={14} /></Link>
+            <span>{t('dash_tip_label')}</span>
+            <p>{t('dash_tip_body')}</p>
+            <Link to="/user/complaints/new">{t('dash_tip_link')} <ArrowUpRight size={14} /></Link>
           </div>
         </Card>
       </div>

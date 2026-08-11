@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, UserPlus, Users, Search, Building2, Check } from 'lucide-react';
 import api from '../lib/api';
+import { useT } from '../context/LanguageContext';
 import { Card, Loading, PageTitle, Badge } from '../components/Ui';
 
 export default function UserManagement() {
+  const t = useT();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -62,22 +64,22 @@ export default function UserManagement() {
   return (
     <>
       <PageTitle 
-        eyebrow="SYSTEM MANAGEMENT" 
-        title="User & Officer Directory" 
-        description="Manage accounts, assign roles (Citizen, Department Officer/Admin, Super Admin), and allocate departments." 
+        eyebrow={t('um_eyebrow')} 
+        title={t('um_title')} 
+        description={t('um_desc')} 
       />
 
       <Card>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3>Platform Accounts ({filteredUsers.length})</h3>
-            <p>Role and department assignments</p>
+            <h3>{t('um_accounts_title')} ({filteredUsers.length})</h3>
+            <p>{t('um_accounts_sub')}</p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <div style={{ position: 'relative' }}>
               <input 
                 type="text" 
-                placeholder="Search user name or email..." 
+                placeholder={t('um_search_placeholder')} 
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
                 style={{ paddingLeft: '32px', fontSize: '13px' }}
@@ -89,43 +91,43 @@ export default function UserManagement() {
               onChange={e => setRoleFilter(e.target.value)}
               style={{ fontSize: '13px', padding: '6px 12px' }}
             >
-              <option value="">All Roles</option>
-              <option value="citizen">Citizen (User)</option>
-              <option value="department_officer">Department Officer (Second Admin)</option>
-              <option value="department_admin">Department Admin (Second Admin)</option>
-              <option value="super_admin">Super Admin (Admin)</option>
+              <option value="">{t('um_filter_all')}</option>
+              <option value="citizen">{t('um_role_citizen')}</option>
+              <option value="department_officer">{t('um_role_officer')}</option>
+              <option value="department_admin">{t('um_role_dept_admin')}</option>
+              <option value="super_admin">{t('um_role_super_admin')}</option>
             </select>
           </div>
         </div>
 
         {editingUser && (
           <div style={{ margin: '16px 0', padding: '16px', background: 'var(--surface-hover)', borderRadius: '8px', border: '1px solid var(--line)' }}>
-            <h4 style={{ margin: '0 0 12px 0' }}>Update Role for {editingUser.name} ({editingUser.email})</h4>
+            <h4 style={{ margin: '0 0 12px 0' }}>{t('um_update_title')} {editingUser.name} ({editingUser.email})</h4>
             <form onSubmit={handleSave} style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <label style={{ fontSize: '13px' }}>
-                Role:
+                {t('um_label_role')}:
                 <select 
                   value={roleForm.role} 
                   onChange={e => setRoleForm({ ...roleForm, role: e.target.value })}
                   style={{ marginLeft: '8px', padding: '6px 10px' }}
                 >
-                  <option value="citizen">Citizen (User)</option>
-                  <option value="department_officer">Department Officer (Second Admin)</option>
-                  <option value="department_admin">Department Admin (Second Admin)</option>
-                  <option value="super_admin">Super Admin (Admin)</option>
+                  <option value="citizen">{t('um_role_citizen')}</option>
+                  <option value="department_officer">{t('um_role_officer')}</option>
+                  <option value="department_admin">{t('um_role_dept_admin')}</option>
+                  <option value="super_admin">{t('um_role_super_admin')}</option>
                 </select>
               </label>
 
               {['department_officer', 'department_admin'].includes(roleForm.role) && (
                 <label style={{ fontSize: '13px' }}>
-                  Department:
+                  {t('cd_dept')}:
                   <select 
                     value={roleForm.department} 
                     onChange={e => setRoleForm({ ...roleForm, department: e.target.value })}
                     style={{ marginLeft: '8px', padding: '6px 10px' }}
                     required
                   >
-                    <option value="">Select Department...</option>
+                    <option value="">{t('um_select_dept')}</option>
                     {departments.map(d => (
                       <option key={d._id} value={d._id}>{d.name} ({d.code})</option>
                     ))}
@@ -134,10 +136,10 @@ export default function UserManagement() {
               )}
 
               <button type="submit" className="button primary small" disabled={updateRoleMutation.isPending}>
-                {updateRoleMutation.isPending ? 'Saving...' : 'Save Role'}
+                {updateRoleMutation.isPending ? t('profile_saving') : t('um_save_role')}
               </button>
               <button type="button" className="button secondary small" onClick={() => setEditingUser(null)}>
-                Cancel
+                {t('um_cancel')}
               </button>
             </form>
           </div>
@@ -147,18 +149,18 @@ export default function UserManagement() {
           <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--line)', textAlign: 'left' }}>
-                <th style={{ padding: '10px' }}>User Name</th>
-                <th style={{ padding: '10px' }}>Email</th>
-                <th style={{ padding: '10px' }}>Assigned Role</th>
-                <th style={{ padding: '10px' }}>Department</th>
-                <th style={{ padding: '10px' }}>Actions</th>
+                <th style={{ padding: '10px' }}>{t('um_col_name')}</th>
+                <th style={{ padding: '10px' }}>{t('auth_label_email')}</th>
+                <th style={{ padding: '10px' }}>{t('um_col_role')}</th>
+                <th style={{ padding: '10px' }}>{t('cd_dept')}</th>
+                <th style={{ padding: '10px' }}>{t('sdash_col_action')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--muted)' }}>
-                    No users match the search filter.
+                    {t('um_no_users')}
                   </td>
                 </tr>
               ) : (
@@ -176,7 +178,7 @@ export default function UserManagement() {
                     </td>
                     <td style={{ padding: '10px' }}>
                       <button className="button secondary small" onClick={() => handleEdit(u)}>
-                        Edit Role & Dept
+                        {t('um_btn_edit')}
                       </button>
                     </td>
                   </tr>

@@ -24,10 +24,12 @@ import {
 } from 'recharts';
 import api from '../lib/api';
 import { Card, Loading, PageTitle, StatCard } from '../components/Ui';
+import { useT } from '../context/LanguageContext';
 
 const colors = ['#0b7285', '#ee7654', '#f4b942', '#3c8d71', '#748ffc'];
 
 export default function AdminDashboard() {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['admin-system-analytics'],
     queryFn: async () => (await api.get('/admin/analytics')).data.data
@@ -42,34 +44,34 @@ export default function AdminDashboard() {
   return (
     <>
       <PageTitle 
-        eyebrow="SYSTEM-WIDE ADMIN CONSOLE" 
-        title="City Grievance Overview & Analytics" 
-        description="Comprehensive performance monitoring, department management, and AI system health." 
+        eyebrow={t('adash_eyebrow')} 
+        title={t('adash_title')} 
+        description={t('adash_desc')} 
         action={
           <div style={{ display: 'flex', gap: '8px' }}>
             <Link to="/admin/users" className="button secondary">
-              <Users size={16} /> Manage Users
+              <Users size={16} /> {t('adash_manage_users')}
             </Link>
             <Link to="/admin/departments" className="button primary">
-              <Building2 size={16} /> Departments
+              <Building2 size={16} /> {t('adash_departments')}
             </Link>
           </div>
         }
       />
 
       <div className="stat-grid admin-stats">
-        <StatCard label="Total complaints" value={total} change="Across all departments" icon={FileWarning} />
-        <StatCard label="Pending review" value={data?.pendingReview || 0} change="AI confidence needs attention" icon={ClipboardCheck} accent="amber" />
-        <StatCard label="Avg. resolution" value={`${data?.averageResolutionHours || '0.0'}h`} change="From submission to resolution" icon={Clock3} accent="mint" />
-        <StatCard label="AI confidence" value={`${Math.round((data?.confidence?.average || 0.94) * 100)}%`} change={`${data?.confidence?.low || 0} low-confidence predictions`} icon={Zap} accent="coral" />
+        <StatCard label={t('admin_stat_total')} value={total} change={t('admin_stat_total_sub')} icon={FileWarning} />
+        <StatCard label={t('admin_stat_pending')} value={data?.pendingReview || 0} change={t('admin_stat_pending_sub')} icon={ClipboardCheck} accent="amber" />
+        <StatCard label={t('admin_stat_avg')} value={`${data?.averageResolutionHours || '0.0'}h`} change={t('admin_stat_avg_sub')} icon={Clock3} accent="mint" />
+        <StatCard label={t('admin_stat_ai')} value={`${Math.round((data?.confidence?.average || 0.94) * 100)}%`} change={`${data?.confidence?.low || 0} ${t('adash_low_confidence')}`} icon={Zap} accent="coral" />
       </div>
 
       <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
         <Card>
           <div className="card-header">
             <div>
-              <h3>Complaint status breakdown</h3>
-              <p>Current grievance lifecycle distribution</p>
+              <h3>{t('admin_chart_flow_title')}</h3>
+              <p>{t('admin_chart_flow_sub')}</p>
             </div>
           </div>
           <div className="chart-wrap" style={{ height: '260px' }}>
@@ -88,8 +90,8 @@ export default function AdminDashboard() {
         <Card>
           <div className="card-header">
             <div>
-              <h3>Priority distribution</h3>
-              <p>Severity of submitted civic issues</p>
+              <h3>{t('admin_chart_priority_title')}</h3>
+              <p>{t('admin_chart_priority_sub')}</p>
             </div>
           </div>
           <div className="chart-wrap pie" style={{ height: '200px' }}>
@@ -118,31 +120,31 @@ export default function AdminDashboard() {
       <Card className="performance-card" style={{ marginTop: '24px' }}>
         <div className="card-header">
           <div>
-            <h3>System Performance Snapshot</h3>
-            <p>Operational health and resolution metrics</p>
+            <h3>{t('admin_perf_title')}</h3>
+            <p>{t('admin_perf_sub')}</p>
           </div>
           <ShieldCheck size={19} className="muted-icon" />
         </div>
         <div className="performance-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
           <div>
             <strong>94.2%</strong>
-            <span>Citizen satisfaction</span>
-            <small className="positive" style={{ color: 'var(--mint)' }}>↑ 4.8% this month</small>
+            <span>{t('admin_perf_satisfaction')}</span>
+            <small className="positive" style={{ color: 'var(--mint)' }}>↑ 4.8% {t('adash_this_month')}</small>
           </div>
           <div>
             <strong>1.8d</strong>
-            <span>First response time</span>
-            <small className="positive" style={{ color: 'var(--mint)' }}>↓ 0.4d this month</small>
+            <span>{t('admin_perf_response')}</span>
+            <small className="positive" style={{ color: 'var(--mint)' }}>↓ 0.4d {t('adash_this_month')}</small>
           </div>
           <div>
             <strong>12.6%</strong>
-            <span>Duplicate reports</span>
-            <small>AI linked 218 tickets</small>
+            <span>{t('admin_perf_duplicates')}</span>
+            <small>{t('adash_ai_linked')}</small>
           </div>
           <div>
             <strong>87%</strong>
-            <span>Within SLA</span>
-            <small className="positive" style={{ color: 'var(--mint)' }}>↑ 7% this month</small>
+            <span>{t('admin_perf_sla')}</span>
+            <small className="positive" style={{ color: 'var(--mint)' }}>↑ 7% {t('adash_this_month')}</small>
           </div>
         </div>
       </Card>
