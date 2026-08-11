@@ -1,9 +1,11 @@
 import { useLanguage } from '../context/LanguageContext';
 
 const LANGS = [
-  { code: 'en', label: 'EN' },
-  { code: 'hi', label: 'हि' },
-  { code: 'mr', label: 'म' },
+  { code: 'en', label: 'EN',  title: 'English' },
+  { code: 'hi', label: 'हि',  title: 'हिन्दी' },
+  { code: 'mr', label: 'म',   title: 'मराठी' },
+  { code: 'gu', label: 'ગુ',  title: 'ગુજરાતી' },
+  { code: 'ta', label: 'த',   title: 'தமிழ்' },
 ];
 
 export default function LanguageSwitcher({ className = '' }) {
@@ -11,13 +13,13 @@ export default function LanguageSwitcher({ className = '' }) {
 
   return (
     <div className={`lang-switcher ${className}`} role="group" aria-label="Select language">
-      {LANGS.map(({ code, label }) => (
+      {LANGS.map(({ code, label, title }) => (
         <button
           key={code}
           className={`lang-btn${lang === code ? ' active' : ''}`}
           onClick={() => setLang(code)}
           aria-pressed={lang === code}
-          title={code === 'en' ? 'English' : code === 'hi' ? 'हिन्दी' : 'मराठी'}
+          title={title}
         >
           {label}
         </button>

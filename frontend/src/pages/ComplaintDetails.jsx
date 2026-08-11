@@ -1,24 +1,21 @@
-<<<<<<< HEAD
-import { Link, useParams } from 'react-router-dom'; import { useQuery } from '@tanstack/react-query'; import { ArrowLeft, Clock3, MapPin, MessageSquare, Sparkles } from 'lucide-react'; import { io } from 'socket.io-client'; import { useEffect, useState } from 'react'; import api from '../lib/api'; import { Badge, Button, Card, Loading, Timeline } from '../components/Ui'; import { formatDate, formatStatus } from '../lib/format'; import { useT } from '../context/LanguageContext';
-export default function ComplaintDetails(){const {id}=useParams(); const t=useT(); const {data,isLoading}=useQuery({queryKey:['complaint',id],queryFn:async()=>(await api.get(`/complaints/${id}`)).data.data}); const [live,setLive]=useState(false); useEffect(()=>{if(!id)return; const socket=io(import.meta.env.VITE_SOCKET_URL||'http://localhost:4000'); socket.emit('complaint:subscribe',id); socket.on('complaint:status',()=>setLive(true)); return()=>socket.disconnect()},[id]); if(isLoading)return <Loading/>; const complaint=data?.complaint; if(!complaint)return <div className="empty-state">{t('cd_not_found')}</div>; return <><Link to="/complaints" className="back-link content-back"><ArrowLeft size={15}/> {t('cd_back')}</Link><div className="details-head"><div><div className="eyebrow">{complaint.ticketId}</div><h1>{complaint.title}</h1><div className="detail-sub"><MapPin size={14}/> {complaint.location?.address} <span>·</span> {t('cd_submitted')} {formatDate(complaint.createdAt)}</div></div><Badge>{complaint.status}</Badge></div>{live&&<div className="live-alert"><span className="live"><i/> LIVE</span> {t('cd_live_alert')}</div>}<div className="details-grid"><Card><div className="card-header"><div><h3>{t('cd_timeline_title')}</h3><p>{t('cd_timeline_sub')}</p></div><Clock3 size={19} className="muted-icon"/></div><Timeline items={data.timeline}/></Card><div className="details-side"><Card><div className="card-header"><h3>{t('cd_ticket_title')}</h3></div><dl className="details-list"><div><dt>{t('cd_dept')}</dt><dd>{complaint.department?.name||t('cd_dept_routing')}</dd></div><div><dt>{t('cd_priority')}</dt><dd><Badge tone={complaint.priority==='critical'?'coral':undefined}>{complaint.priority}</Badge></dd></div><div><dt>{t('cd_category')}</dt><dd>{complaint.category||t('cd_category_other')}</dd></div><div><dt>{t('cd_last_updated')}</dt><dd>{formatDate(complaint.updatedAt)}</dd></div></dl></Card><Card><div className="ai-note large"><Sparkles size={16}/><div><strong>{t('cd_ai_title')}</strong><p>{t('cd_ai_body')}</p></div></div></Card></div></div>{complaint.status==='resolved'&&<Card className="feedback-card"><MessageSquare size={19}/><div><h3>{t('cd_feedback_title')}</h3><p>{t('cd_feedback_body')}</p></div><Button variant="secondary">{t('cd_feedback_btn')}</Button></Card>}</>}
-=======
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Clock3, MapPin, MessageSquare, Sparkles, UserCheck, Shield, Send } from 'lucide-react';
+import { ArrowLeft, Clock3, MapPin, MessageSquare, Send, Sparkles } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { Badge, Button, Card, Loading, Timeline } from '../components/Ui';
 import { formatDate } from '../lib/format';
+import { useT } from '../context/LanguageContext';
 
 export default function ComplaintDetails() {
   const { id } = useParams();
   const { user } = useAuth();
+  const t = useT();
   const queryClient = useQueryClient();
   const [live, setLive] = useState(false);
 
-  // Status & Note state for Second Admin / Admin controls
   const [statusInput, setStatusInput] = useState('');
   const [statusComment, setStatusComment] = useState('');
   const [officerId, setOfficerId] = useState('');
@@ -38,9 +35,8 @@ export default function ComplaintDetails() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ status, comment }) => {
-      return (await api.patch(`/complaints/${id}/status`, { status, comment })).data;
-    },
+    mutationFn: async ({ status, comment }) =>
+      (await api.patch(`/complaints/${id}/status`, { status, comment })).data,
     onSuccess: () => {
       queryClient.invalidateQueries(['complaint', id]);
       setStatusComment('');
@@ -48,18 +44,14 @@ export default function ComplaintDetails() {
   });
 
   const assignOfficerMutation = useMutation({
-    mutationFn: async (selectedOfficerId) => {
-      return (await api.patch(`/complaints/${id}/assign`, { officerId: selectedOfficerId })).data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['complaint', id]);
-    }
+    mutationFn: async (selectedOfficerId) =>
+      (await api.patch(`/complaints/${id}/assign`, { officerId: selectedOfficerId })).data,
+    onSuccess: () => queryClient.invalidateQueries(['complaint', id])
   });
 
   const addNoteMutation = useMutation({
-    mutationFn: async (comment) => {
-      return (await api.post(`/complaints/${id}/notes`, { comment })).data;
-    },
+    mutationFn: async (comment) =>
+      (await api.post(`/complaints/${id}/notes`, { comment })).data,
     onSuccess: () => {
       queryClient.invalidateQueries(['complaint', id]);
       setNoteText('');
@@ -77,14 +69,20 @@ export default function ComplaintDetails() {
   if (isLoading) return <Loading />;
 
   const complaint = data?.complaint;
-  if (!complaint) return <div className="empty-state">Complaint not found or access denied.</div>;
+  if (!complaint) return <div className="empty-state">{t('cd_not_found')}</div>;
 
   const officers = officersData?.officers || [];
 
+  const backTo = user?.role === 'super_admin'
+    ? '/admin/complaints'
+    : user?.role?.includes('department')
+      ? '/second-admin/queue'
+      : '/complaints';
+
   return (
     <>
-      <Link to={user?.role === 'super_admin' ? '/admin/complaints' : (user?.role?.includes('department') ? '/second-admin/queue' : '/user/complaints')} className="back-link content-back">
-        <ArrowLeft size={15} /> All complaints
+      <Link to={backTo} className="back-link content-back">
+        <ArrowLeft size={15} /> {t('cd_back')}
       </Link>
 
       <div className="details-head">
@@ -92,8 +90,8 @@ export default function ComplaintDetails() {
           <div className="eyebrow">{complaint.ticketId}</div>
           <h1>{complaint.title}</h1>
           <div className="detail-sub">
-            <MapPin size={14} /> {complaint.location?.address || 'No location specified'} 
-            <span>·</span> Submitted {formatDate(complaint.createdAt)}
+            <MapPin size={14} /> {complaint.location?.address || '—'}
+            <span>·</span> {t('cd_submitted')} {formatDate(complaint.createdAt)}
           </div>
         </div>
         <Badge>{complaint.status}</Badge>
@@ -101,7 +99,7 @@ export default function ComplaintDetails() {
 
       {live && (
         <div className="live-alert">
-          <span className="live"><i /> LIVE</span> This ticket just received an update. Refresh to see the latest details.
+          <span className="live"><i /> LIVE</span> {t('cd_live_alert')}
         </div>
       )}
 
@@ -109,8 +107,8 @@ export default function ComplaintDetails() {
         <Card>
           <div className="card-header">
             <div>
-              <h3>Progress timeline</h3>
-              <p>Every step and status transition recorded</p>
+              <h3>{t('cd_timeline_title')}</h3>
+              <p>{t('cd_timeline_sub')}</p>
             </div>
             <Clock3 size={19} className="muted-icon" />
           </div>
@@ -119,53 +117,57 @@ export default function ComplaintDetails() {
 
         <div className="details-side">
           <Card>
-            <div className="card-header">
-              <h3>Ticket details</h3>
-            </div>
+            <div className="card-header"><h3>{t('cd_ticket_title')}</h3></div>
             <dl className="details-list">
               <div>
-                <dt>Department</dt>
-                <dd>{complaint.department?.name || 'Being routed'}</dd>
+                <dt>{t('cd_dept')}</dt>
+                <dd>{complaint.department?.name || t('cd_dept_routing')}</dd>
               </div>
               <div>
-                <dt>Priority</dt>
-                <dd><Badge tone={complaint.priority === 'critical' || complaint.priority === 'high' ? 'coral' : 'teal'}>{complaint.priority || 'medium'}</Badge></dd>
+                <dt>{t('cd_priority')}</dt>
+                <dd>
+                  <Badge tone={complaint.priority === 'critical' || complaint.priority === 'high' ? 'coral' : undefined}>
+                    {complaint.priority || 'medium'}
+                  </Badge>
+                </dd>
               </div>
               <div>
-                <dt>Category</dt>
-                <dd>{complaint.category || 'Other'}</dd>
+                <dt>{t('cd_category')}</dt>
+                <dd>{complaint.category || t('cd_category_other')}</dd>
               </div>
+              {complaint.citizen?.name && (
+                <div>
+                  <dt>{t('cd_citizen')}</dt>
+                  <dd>{complaint.citizen.name}</dd>
+                </div>
+              )}
+              {(complaint.assignedTo?.name || isOfficerOrAdmin) && (
+                <div>
+                  <dt>{t('cd_assigned_officer')}</dt>
+                  <dd>{complaint.assignedTo?.name || t('cd_unassigned')}</dd>
+                </div>
+              )}
               <div>
-                <dt>Citizen</dt>
-                <dd>{complaint.citizen?.name || 'Anonymous'}</dd>
-              </div>
-              <div>
-                <dt>Assigned Officer</dt>
-                <dd>{complaint.assignedTo?.name || 'Unassigned'}</dd>
-              </div>
-              <div>
-                <dt>Last updated</dt>
+                <dt>{t('cd_last_updated')}</dt>
                 <dd>{formatDate(complaint.updatedAt)}</dd>
               </div>
             </dl>
           </Card>
 
-          {/* Department Officer / Admin Action Panel */}
+          {/* Department Officer / Admin action panel */}
           {isOfficerOrAdmin && (
-            <Card style={{ border: '1px solid var(--accent-teal)' }}>
-              <div className="card-header">
-                <h3>Department Actions</h3>
-              </div>
-              
+            <Card style={{ border: '1px solid var(--teal)' }}>
+              <div className="card-header"><h3>{t('cd_admin_panel_title')}</h3></div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* Status Update Form */}
+
+                {/* Status update */}
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                    Update Status:
+                    {t('cd_admin_status_label')}
                   </label>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <select 
-                      value={statusInput || complaint.status} 
+                    <select
+                      value={statusInput || complaint.status}
                       onChange={e => setStatusInput(e.target.value)}
                       style={{ fontSize: '13px', padding: '6px' }}
                     >
@@ -176,68 +178,68 @@ export default function ComplaintDetails() {
                       <option value="resolved">Resolved</option>
                       <option value="rejected">Rejected</option>
                     </select>
-                    <button 
-                      className="button primary small"
+                    <button
+                      className="button primary small-button"
                       onClick={() => updateStatusMutation.mutate({ status: statusInput || complaint.status, comment: statusComment })}
                       disabled={updateStatusMutation.isPending}
                     >
-                      {updateStatusMutation.isPending ? 'Updating...' : 'Update'}
+                      {updateStatusMutation.isPending ? t('cd_admin_updating') : t('cd_admin_update_btn')}
                     </button>
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Status update remark (optional)..." 
+                  <input
+                    type="text"
+                    placeholder={t('cd_admin_remark_placeholder')}
                     value={statusComment}
                     onChange={e => setStatusComment(e.target.value)}
                     style={{ fontSize: '12px', marginTop: '6px' }}
                   />
                 </div>
 
-                {/* Assign Officer */}
+                {/* Assign officer */}
                 <div style={{ paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                    Assign Field Officer:
+                    {t('cd_admin_assign_label')}
                   </label>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <select 
-                      value={officerId} 
+                    <select
+                      value={officerId}
                       onChange={e => setOfficerId(e.target.value)}
                       style={{ fontSize: '13px', padding: '6px', flexGrow: 1 }}
                     >
-                      <option value="">Select Officer...</option>
+                      <option value="">{t('cd_admin_select_officer')}</option>
                       {officers.map(o => (
                         <option key={o._id} value={o._id}>{o.name}</option>
                       ))}
                     </select>
-                    <button 
-                      className="button secondary small"
+                    <button
+                      className="button secondary small-button"
                       onClick={() => officerId && assignOfficerMutation.mutate(officerId)}
                       disabled={assignOfficerMutation.isPending || !officerId}
                     >
-                      Assign
+                      {t('cd_admin_assign_btn')}
                     </button>
                   </div>
                 </div>
 
-                {/* Add Internal Remark */}
+                {/* Internal note */}
                 <div style={{ paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                    Add Internal Note:
+                    {t('cd_admin_note_label')}
                   </label>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Type internal remark..." 
+                    <input
+                      type="text"
+                      placeholder={t('cd_admin_note_placeholder')}
                       value={noteText}
                       onChange={e => setNoteText(e.target.value)}
                       style={{ fontSize: '12px', flexGrow: 1 }}
                     />
-                    <button 
-                      className="button secondary small"
+                    <button
+                      className="button secondary small-button"
                       onClick={() => noteText && addNoteMutation.mutate(noteText)}
                       disabled={addNoteMutation.isPending || !noteText}
                     >
-                      <Send size={12} /> Note
+                      <Send size={12} /> {t('cd_admin_note_btn')}
                     </button>
                   </div>
                 </div>
@@ -249,14 +251,24 @@ export default function ComplaintDetails() {
             <div className="ai-note large">
               <Sparkles size={16} />
               <div>
-                <strong>Smart Routing & Classification</strong>
-                <p>Categorized under <b>{complaint.category || 'General'}</b> with priority level <b>{complaint.priority || 'medium'}</b>.</p>
+                <strong>{t('cd_ai_title')}</strong>
+                <p>{t('cd_ai_body')}</p>
               </div>
             </div>
           </Card>
         </div>
       </div>
+
+      {complaint.status === 'resolved' && (
+        <Card className="feedback-card">
+          <MessageSquare size={19} />
+          <div>
+            <h3>{t('cd_feedback_title')}</h3>
+            <p>{t('cd_feedback_body')}</p>
+          </div>
+          <Button variant="secondary">{t('cd_feedback_btn')}</Button>
+        </Card>
+      )}
     </>
   );
 }
->>>>>>> f3c302c34536cff29c4ba4be1c87675d35d06a84

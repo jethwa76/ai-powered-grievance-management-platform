@@ -2,8 +2,10 @@ import { createContext, useContext, useState } from 'react';
 import en from '../locales/en';
 import hi from '../locales/hi';
 import mr from '../locales/mr';
+import gu from '../locales/gu';
+import ta from '../locales/ta';
 
-const locales = { en, hi, mr };
+const locales = { en, hi, mr, gu, ta };
 
 const LanguageContext = createContext(null);
 
