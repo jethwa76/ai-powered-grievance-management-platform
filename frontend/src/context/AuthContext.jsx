@@ -53,11 +53,18 @@ export function AuthProvider({ children }) {
         (u) => u.email.toLowerCase() === credentials.email.toLowerCase()
       );
       
+      const getFallbackRole = (email) => {
+        const lower = email.toLowerCase();
+        if (lower.includes('dept') || lower.includes('meta') || lower.includes('officer')) return 'department_admin';
+        if (lower.includes('admin')) return 'super_admin';
+        return 'citizen';
+      };
+
       const sessionUser = match ? { id: match.id, name: match.name, email: match.email, role: match.role, preferredLanguage: match.preferredLanguage } : {
         id: 'user-' + Date.now(),
-        name: credentials.email.split('@')[0] || 'Citizen',
+        name: credentials.email.split('@')[0] || 'User',
         email: credentials.email,
-        role: credentials.email.includes('admin') ? 'super_admin' : 'citizen',
+        role: getFallbackRole(credentials.email),
         preferredLanguage: 'en'
       };
 

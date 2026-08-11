@@ -1,5 +1,56 @@
-import { useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react'; import { useAuth } from '../context/AuthContext'; import { useT } from '../context/LanguageContext'; import LanguageSwitcher from '../components/LanguageSwitcher';
-export default function Auth({mode}){const login=mode==='login'; const {login:signIn,register}=useAuth(); const navigate=useNavigate(); const [show,setShow]=useState(false); const [form,setForm]=useState(login?{email:'',password:''}:{name:'',email:'',password:'',preferredLanguage:'en'}); const [error,setError]=useState(''); const [busy,setBusy]=useState(false); const t=useT(); const update=(e)=>setForm({...form,[e.target.name]:e.target.value}); const submit = async (e) => {
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck, KeyRound, Shield, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useT } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+
+const DEMO_ACCOUNTS = [
+  {
+    label: 'Super Admin',
+    icon: 'shield',
+    email: 'admin@grievance.local',
+    password: 'ChangeMe!12345',
+    role: 'super_admin',
+  },
+  {
+    label: 'Meta Admin',
+    icon: 'shield',
+    email: 'dept.admin@grievance.local',
+    password: 'ChangeMe!12345',
+    role: 'department_admin',
+  },
+  {
+    label: 'Citizen User',
+    icon: 'user',
+    email: 'citizen@grievance.local',
+    password: 'ChangeMe!12345',
+    role: 'citizen',
+  },
+];
+
+export default function Auth({ mode }) {
+  const login = mode === 'login';
+  const { login: signIn, register } = useAuth();
+  const navigate = useNavigate();
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(
+    login
+      ? { email: '', password: '' }
+      : { name: '', email: '', password: '', preferredLanguage: 'en' }
+  );
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const t = useT();
+
+  const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const fillDemo = (account) => {
+    setForm((prev) => ({ ...prev, email: account.email, password: account.password }));
+    setError('');
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
@@ -8,9 +59,135 @@ export default function Auth({mode}){const login=mode==='login'; const {login:si
       else await register(form);
       navigate('/dashboard');
     } catch (error) {
-      const msg = error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Unable to complete that request.';
+      const msg =
+        error.response?.data?.error?.message ||
+        error.response?.data?.message ||
+        error.message ||
+        'Unable to complete that request.';
       setError(msg);
     } finally {
       setBusy(false);
     }
-  }; return <div className="auth-page"><div className="auth-aside"><Link to="/" className="brand"><span className="brand-mark">✦</span><span>Civic<span>Flow</span></span></Link><div><div className="eyebrow light">{t('auth_eyebrow_aside')}</div><h1>{t('auth_aside_h1_a')} <em>{t('auth_aside_h1_em')}</em></h1><p>{t('auth_aside_sub')}</p></div><div className="aside-footer"><ShieldCheck size={16}/> {t('auth_aside_security')}</div></div><div className="auth-main"><div className="auth-top-bar"><Link to="/" className="back-link"><ArrowLeft size={16}/> {t('nav_back_home')}</Link><LanguageSwitcher/></div><div className="auth-form"><div className="eyebrow">{login?t('auth_eyebrow_login'):t('auth_eyebrow_signup')}</div><h2>{login?t('auth_h2_login'):t('auth_h2_signup')}</h2><p className="muted">{login?t('auth_sub_login'):t('auth_sub_signup')}</p><form onSubmit={submit}>{!login&&<label>{t('auth_label_name')}<input name="name" value={form.name} onChange={update} placeholder={t('auth_placeholder_name')} required/></label>}<label>{t('auth_label_email')}<input name="email" type="email" value={form.email} onChange={update} placeholder={t('auth_placeholder_email')} required/></label><label>{t('auth_label_password')}<div className="password-input"><input name="password" type={show?'text':'password'} value={form.password} onChange={update} placeholder={login?t('auth_placeholder_password_login'):t('auth_placeholder_password_signup')} required minLength={login?1:10}/><button type="button" className="password-toggle" onClick={()=>setShow(!show)}>{show?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></label>{!login&&<label>{t('auth_label_lang')}<select name="preferredLanguage" value={form.preferredLanguage} onChange={update}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option><option value="gu">ગુજરાતી</option><option value="ta">தமிழ்</option></select></label>}{error&&<div className="form-error">{error}</div>}<button className="button primary full" disabled={busy}>{busy?t('auth_btn_busy'):login?t('auth_btn_login'):t('auth_btn_signup')} {!busy&&<ArrowRight size={17}/>}</button></form><div className="auth-switch">{login?<>{t('auth_switch_login')} <Link to="/signup">{t('auth_switch_login_link')}</Link></>:<>{t('auth_switch_signup')} <Link to="/login">{t('auth_switch_signup_link')}</Link></>}</div></div></div></div>}
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-aside">
+        <Link to="/" className="brand">
+          <span className="brand-mark">✦</span>
+          <span>Civic<span>Flow</span></span>
+        </Link>
+        <div>
+          <div className="eyebrow light">{t('auth_eyebrow_aside')}</div>
+          <h1>{t('auth_aside_h1_a')} <em>{t('auth_aside_h1_em')}</em></h1>
+          <p>{t('auth_aside_sub')}</p>
+        </div>
+        <div className="aside-footer">
+          <ShieldCheck size={16} /> {t('auth_aside_security')}
+        </div>
+      </div>
+
+      <div className="auth-main">
+        <div className="auth-top-bar">
+          <Link to="/" className="back-link">
+            <ArrowLeft size={16} /> {t('nav_back_home')}
+          </Link>
+          <LanguageSwitcher />
+        </div>
+
+        <div className="auth-form">
+          <div className="eyebrow">{login ? t('auth_eyebrow_login') : t('auth_eyebrow_signup')}</div>
+          <h2>{login ? t('auth_h2_login') : t('auth_h2_signup')}</h2>
+          <p className="muted">{login ? t('auth_sub_login') : t('auth_sub_signup')}</p>
+
+          {/* ── Demo Credentials Card ── */}
+          <div className="demo-credentials">
+            <div className="demo-credentials-header">
+              <KeyRound size={14} />
+              <span>Demo Credentials</span>
+            </div>
+            <div className="demo-credentials-grid">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  className="demo-account-card"
+                  onClick={() => fillDemo(acc)}
+                  title={`Click to auto-fill ${acc.label} credentials`}
+                >
+                  <div className="demo-account-icon">
+                    {acc.icon === 'shield' ? <Shield size={15} /> : <User size={15} />}
+                  </div>
+                  <div className="demo-account-info">
+                    <strong>{acc.label}</strong>
+                    <span>{acc.email}</span>
+                    <span className="demo-password">Password: {acc.password}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={submit}>
+            {!login && (
+              <label>
+                {t('auth_label_name')}
+                <input name="name" value={form.name} onChange={update} placeholder={t('auth_placeholder_name')} required />
+              </label>
+            )}
+            <label>
+              {t('auth_label_email')}
+              <input name="email" type="email" value={form.email} onChange={update} placeholder={t('auth_placeholder_email')} required />
+            </label>
+            <label>
+              {t('auth_label_password')}
+              <div className="password-input">
+                <input
+                  name="password"
+                  type={show ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={update}
+                  placeholder={login ? t('auth_placeholder_password_login') : t('auth_placeholder_password_signup')}
+                  required
+                  minLength={login ? 1 : 10}
+                />
+                <button type="button" className="password-toggle" onClick={() => setShow(!show)}>
+                  {show ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
+            {!login && (
+              <label>
+                {t('auth_label_lang')}
+                <select name="preferredLanguage" value={form.preferredLanguage} onChange={update}>
+                  <option value="en">English</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="mr">मराठी</option>
+                  <option value="gu">ગુજરાતી</option>
+                  <option value="ta">தமிழ்</option>
+                </select>
+              </label>
+            )}
+            {error && <div className="form-error">{error}</div>}
+            <button className="button primary full" disabled={busy}>
+              {busy ? t('auth_btn_busy') : login ? t('auth_btn_login') : t('auth_btn_signup')}{' '}
+              {!busy && <ArrowRight size={17} />}
+            </button>
+          </form>
+
+          <div className="auth-switch">
+            {login ? (
+              <>
+                {t('auth_switch_login')} <Link to="/signup">{t('auth_switch_login_link')}</Link>
+              </>
+            ) : (
+              <>
+                {t('auth_switch_signup')} <Link to="/login">{t('auth_switch_signup_link')}</Link>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
